@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Represents a multilayer feedforward neural network trained using the online variant of SGD.
 type Network struct {
 	BaseSubject
 	neurons     []int
@@ -14,8 +15,10 @@ type Network struct {
 	initializer Initializer
 	stop        StoppingCondition
 	eta         float64
+	isFitted    bool
 }
 
+// Constructor of a neural network.
 func NewNetwork(neurons []int, activations []ActivationFunction, initializer Initializer, stop StoppingCondition, eta float64) *Network {
 	return &Network{
 		neurons:     neurons,
@@ -27,6 +30,7 @@ func NewNetwork(neurons []int, activations []ActivationFunction, initializer Ini
 	}
 }
 
+// Constructs all layers of given specification.
 func constructLayers(neurons []int, activations []ActivationFunction) []layer {
 	weights := constructWeights(neurons)
 	biases := constructBiases(neurons)
@@ -43,6 +47,7 @@ func constructLayers(neurons []int, activations []ActivationFunction) []layer {
 	return layers
 }
 
+// Construct a 3d slice which holds all the weights used in the network.
 func constructWeights(neurons []int) [][][]float64 {
 	layerCount := len(neurons) - 1
 	weights := make([][][]float64, layerCount)
@@ -55,6 +60,7 @@ func constructWeights(neurons []int) [][][]float64 {
 	return weights
 }
 
+// Construct a 2d slice which holds all the biases used in the network.
 func constructBiases(neurons []int) [][]float64 {
 	layerCount := len(neurons) - 1
 	biases := make([][]float64, layerCount)
@@ -64,7 +70,11 @@ func constructBiases(neurons []int) [][]float64 {
 	return biases
 }
 
+// Fits model to given sample using online SGD.
+// Initializes weights on every call and it does so concurrently on a per layer basis.
 func (n *Network) Fit(samples []Sample) {
+	n.isFitted = true
+
 	var wg sync.WaitGroup
 	wg.Add(len(n.layers))
 	for _, l := range n.layers {
@@ -78,6 +88,9 @@ func (n *Network) Fit(samples []Sample) {
 	n.backpropagation(samples)
 }
 
+// Backpropagation main loop.
+// Trains the network until the StoppingCondition is met and notifies ModelObserver instances currently subscribed to the network.
+// Before starting an epoch a preprocess function is called which shuffles the samples.
 func (n *Network) backpropagation(samples []Sample) {
 	iter := 0
 	for {
@@ -94,11 +107,13 @@ func (n *Network) backpropagation(samples []Sample) {
 	}
 }
 
+// Preprocess function which shuffles the samples before every epoch.
 func preprocess(samples []Sample) {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(samples), func(i, j int) { samples[i], samples[j] = samples[j], samples[i] })
 }
 
+// Performs an epoch of online SGD.
 func (n *Network) completeEpoch(samples []Sample) {
 	for _, sample := range samples {
 		input := sample.Input
@@ -135,7 +150,12 @@ func (n *Network) completeEpoch(samples []Sample) {
 	}
 }
 
+// Performs a model prediction.
 func (n *Network) Predict(input []float64) []float64 {
+	if !n.isFitted {
+		panic("This instance of Network has not been fitted yet.")
+	}
+
 	output := n.layers[0].processInput(input)
 	for i := 1; i < len(n.layers); i++ {
 		output = n.layers[i].processInput(output)

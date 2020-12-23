@@ -2,6 +2,7 @@ package feedforward
 
 import "sync"
 
+// Represents a layer of a feedforward neural network.
 type layer interface {
 	initialize(Initializer)
 	processInput([]float64) []float64
@@ -11,6 +12,7 @@ type layer interface {
 	getBiases() []float64
 }
 
+// Base layer implementation
 type baseLayer struct {
 	weights    [][]float64
 	biases     []float64
@@ -22,6 +24,7 @@ type baseLayer struct {
 	outputCache []float64
 }
 
+// Initializes weights and biases of the entire layer using the provided initializer
 func (l *baseLayer) initialize(initializer Initializer) {
 	initializer.Initialize(l.weights)
 	for i := 0; i < l.neurons; i++ {
@@ -29,6 +32,8 @@ func (l *baseLayer) initialize(initializer Initializer) {
 	}
 }
 
+// Computes output of the entire layer for the given input and caches the output before returning to caller.
+// The output is computed concurrently for each neuron through goroutines, synchronized through a WaitGroup.
 func (l *baseLayer) processInput(input []float64) []float64 {
 	output := make([]float64, l.neurons)
 
@@ -46,6 +51,7 @@ func (l *baseLayer) processInput(input []float64) []float64 {
 	return output
 }
 
+// Computes net of i-th neuron
 func (l *baseLayer) net(i int, input []float64) float64 {
 	net := l.biases[i]
 	for j := 0; j < l.prevLayerNeurons; j++ {
@@ -54,24 +60,31 @@ func (l *baseLayer) net(i int, input []float64) float64 {
 	return net
 }
 
+// Gets cached output
 func (l *baseLayer) getOutputCache() []float64 {
 	return l.outputCache
 }
 
+// Gets underlying weight slice
 func (l *baseLayer) getWeights() [][]float64 {
 	return l.weights
 }
 
+// Gets underlying bias slice
 func (l *baseLayer) getBiases() []float64 {
 	return l.biases
 }
 
+// Type representing a hidden layer.
+// Extends all properties from the baseLayer.
+// Additionally holds outgoing weights used in calculating the weighted layer error.
 type hiddenLayer struct {
 	baseLayer
 	nextLayerNeurons int
 	nextLayerWeights [][]float64
 }
 
+// Constructor of a hidden layer.
 func newHiddenLayer(weights [][]float64, biases []float64, nextLayerWeights [][]float64, activation ActivationFunction) layer {
 	return &hiddenLayer{
 		baseLayer:        baseLayer{weights: weights, biases: biases, activation: activation, prevLayerNeurons: len(weights), neurons: len(biases)},
@@ -80,6 +93,8 @@ func newHiddenLayer(weights [][]float64, biases []float64, nextLayerWeights [][]
 	}
 }
 
+// Computes the weighted error of this layer.
+// Computations are performed concurrently for every neuron of this layer.
 func (h *hiddenLayer) processError(delta []float64) []float64 {
 	layerError := make([]float64, h.neurons)
 	output := h.outputCache
@@ -101,16 +116,20 @@ func (h *hiddenLayer) processError(delta []float64) []float64 {
 	return layerError
 }
 
+// Type representing a hidden layer.
+// Extends all properties from the baseLayer and provides implementation of processError.
 type outputLayer struct {
 	baseLayer
 }
 
+// Constructor of an output layer.
 func newOutputLayer(weights [][]float64, biases []float64, activation ActivationFunction) layer {
 	return &outputLayer{
 		baseLayer: baseLayer{weights: weights, biases: biases, activation: activation, prevLayerNeurons: len(weights), neurons: len(biases)},
 	}
 }
 
+// Computes the error of the output layer.
 func (o *outputLayer) processError(delta []float64) []float64 {
 	layerError := make([]float64, o.neurons)
 	output := o.outputCache

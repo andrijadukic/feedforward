@@ -7,11 +7,14 @@ import (
 	"strings"
 )
 
+// Type which models a standard floating point sample,
+// consisting of any number of floating point inputs and any number of floating point outputs
 type Sample struct {
 	Input  []float64
 	Output []float64
 }
 
+// Function for loading samples from a text file into a slice
 func Load(path string) ([]Sample, error) {
 	var samples []Sample
 
