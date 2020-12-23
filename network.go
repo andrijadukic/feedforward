@@ -68,7 +68,7 @@ func (n *Network) Fit(samples []Sample) {
 	for _, l := range n.layers {
 		go func(layer layer) {
 			defer wg.Done()
-			layer.Initialize(n.initializer)
+			layer.initialize(n.initializer)
 		}(l)
 	}
 	wg.Wait()

@@ -3,11 +3,10 @@ package feedforward
 import "sync"
 
 type layer interface {
-	Initialize(Initializer)
+	initialize(Initializer)
 	processInput([]float64) []float64
 	getOutputCache() []float64
 	processError([]float64) []float64
-	update([][]float64, []float64)
 	getWeights() [][]float64
 	getBiases() []float64
 }
@@ -23,7 +22,7 @@ type baseLayer struct {
 	outputCache []float64
 }
 
-func (l *baseLayer) Initialize(initializer Initializer) {
+func (l *baseLayer) initialize(initializer Initializer) {
 	initializer.Initialize(l.weights)
 	for i := 0; i < l.neurons; i++ {
 		l.biases[i] = 0
@@ -67,16 +66,6 @@ func (l *baseLayer) getBiases() []float64 {
 	return l.biases
 }
 
-func (l *baseLayer) update(weights [][]float64, biases []float64) {
-	for i := 0; i < l.prevLayerNeurons; i++ {
-		for j := 0; j < l.neurons; j++ {
-			l.weights[i][j] += weights[i][j]
-			l.biases[j] += biases[j]
-		}
-	}
-	l.outputCache = nil
-}
-
 type hiddenLayer struct {
 	baseLayer
 	nextLayerNeurons int
@@ -98,13 +87,13 @@ func (h *hiddenLayer) processError(delta []float64) []float64 {
 	var wg sync.WaitGroup
 	wg.Add(h.neurons)
 	for i := 0; i < h.neurons; i++ {
-		go func(neuron int, weights []float64) {
+		go func(i int, weights []float64) {
 			defer wg.Done()
 			sum := 0.
 			for i := 0; i < h.nextLayerNeurons; i++ {
 				sum += delta[i] * weights[i]
 			}
-			layerError[neuron] = h.activation.Gradient(output[neuron]) * sum
+			layerError[i] = h.activation.Gradient(output[i]) * sum
 		}(i, h.nextLayerWeights[i])
 	}
 	wg.Wait()
