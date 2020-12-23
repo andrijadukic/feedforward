@@ -1,26 +1,28 @@
 package feedforward
 
 import (
-	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 )
 
 type Network struct {
+	BaseSubject
 	neurons     []int
 	activations []ActivationFunction
 	layers      []layer
 	initializer Initializer
+	stop        StoppingCondition
 	eta         float64
 }
 
-func NewNetwork(neurons []int, activations []ActivationFunction, initializer Initializer, eta float64) Model {
+func NewNetwork(neurons []int, activations []ActivationFunction, initializer Initializer, stop StoppingCondition, eta float64) *Network {
 	return &Network{
 		neurons:     neurons,
 		activations: activations,
 		layers:      constructLayers(neurons, activations),
 		initializer: initializer,
+		stop:        stop,
 		eta:         eta,
 	}
 }
@@ -78,9 +80,12 @@ func (n *Network) Fit(samples []Sample) {
 
 func (n *Network) backpropagation(samples []Sample) {
 	iter := 0
-	for iter < 50000 {
-		if iter%1000 == 0 {
-			fmt.Println(iter, MeanSquareError(n, samples))
+	for {
+		statistics := IterationStatistic{iteration: iter, score: MeanSquareError(n, samples)}
+		n.NotifyObservers(statistics)
+
+		if n.stop.IsMet(statistics) {
+			break
 		}
 
 		preprocess(samples)
