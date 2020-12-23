@@ -30,6 +30,7 @@ func (l *baseLayer) Initialize(initializer Initializer) {
 
 func (l *baseLayer) processInput(input []float64) []float64 {
 	output := make([]float64, l.neurons)
+
 	var wg sync.WaitGroup
 	wg.Add(l.neurons)
 	for i := 0; i < l.neurons; i++ {
@@ -39,6 +40,7 @@ func (l *baseLayer) processInput(input []float64) []float64 {
 		}(i)
 	}
 	wg.Wait()
+
 	l.outputCache = output
 	return output
 }
@@ -82,13 +84,21 @@ func newHiddenLayer(weights [][]float64, biases []float64, nextLayerWeights [][]
 func (h *hiddenLayer) processError(delta []float64) []float64 {
 	layerError := make([]float64, h.neurons)
 	output := h.outputCache
+
+	var wg sync.WaitGroup
+	wg.Add(h.neurons)
 	for i := 0; i < h.neurons; i++ {
-		sum := 0.
-		for j := 0; j < h.nextLayerNeurons; j++ {
-			sum += delta[j] * h.nextLayerWeights[i][j]
-		}
-		layerError[i] = h.activation.Gradient(output[i]) * sum
+		go func(neuron int, weights []float64) {
+			defer wg.Done()
+			sum := 0.
+			for i := 0; i < h.nextLayerNeurons; i++ {
+				sum += delta[i] * weights[i]
+			}
+			layerError[neuron] = h.activation.Gradient(output[neuron]) * sum
+		}(i, h.nextLayerWeights[i])
 	}
+	wg.Wait()
+
 	return layerError
 }
 
