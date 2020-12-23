@@ -23,3 +23,24 @@ func Sigmoid() ActivationFunction {
 		Gradient: func(net float64) float64 { return net * (1 - net) },
 	}
 }
+
+// TanH activation function.
+func TanH() ActivationFunction {
+	return ActivationFunction{
+		Value:    func(net float64) float64 { return (1 - math.Exp(-2*net)) / (1 + math.Exp(-2*net)) },
+		Gradient: func(net float64) float64 { return 1 - math.Pow(net, 2) },
+	}
+}
+
+// ReLu activation function.
+func ReLu() ActivationFunction {
+	return ActivationFunction{
+		Value: func(net float64) float64 { return math.Max(net, 0) },
+		Gradient: func(net float64) float64 {
+			if net > 0 {
+				return 1
+			}
+			return 0
+		},
+	}
+}

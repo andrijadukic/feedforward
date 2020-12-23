@@ -71,7 +71,7 @@ func constructBiases(neurons []int) [][]float64 {
 }
 
 // Fits model to given sample using online SGD.
-// Initializes weights on every call and it does so concurrently on a per layer basis.
+// Initializes weights on every call, doing so concurrently on a per layer basis.
 func (n *Network) Fit(samples []Sample) {
 	n.isFitted = true
 
