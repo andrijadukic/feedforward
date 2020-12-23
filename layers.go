@@ -8,6 +8,8 @@ type layer interface {
 	getOutputCache() []float64
 	processError([]float64) []float64
 	update([][]float64, []float64)
+	getWeights() [][]float64
+	getBiases() []float64
 }
 
 type baseLayer struct {
@@ -53,8 +55,16 @@ func (l *baseLayer) net(i int, input []float64) float64 {
 	return net
 }
 
-func (l baseLayer) getOutputCache() []float64 {
+func (l *baseLayer) getOutputCache() []float64 {
 	return l.outputCache
+}
+
+func (l *baseLayer) getWeights() [][]float64 {
+	return l.weights
+}
+
+func (l *baseLayer) getBiases() []float64 {
+	return l.biases
 }
 
 func (l *baseLayer) update(weights [][]float64, biases []float64) {
