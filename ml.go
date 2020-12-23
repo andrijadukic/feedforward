@@ -14,7 +14,7 @@ type Model interface {
 // Defines a machine learning model which can be trained without seeing all the samples.
 type IterativeModel interface {
 	Model
-	Predict([]float64) []float64
+	PartialFit([]Sample)
 }
 
 // MSE loss function.
