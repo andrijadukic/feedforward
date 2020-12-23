@@ -7,12 +7,23 @@ type ActivationFunction interface {
 	Gradient(net float64) float64
 }
 
-type Sigmoid struct{}
+func Repeat(activation ActivationFunction, n int) {
+	activations := make([]ActivationFunction, n)
+	for i := 0; i < n; i++ {
+		activations[i] = activation
+	}
+}
 
-func (s Sigmoid) Value(net float64) float64 {
+type sigmoid struct{}
+
+func Sigmoid() ActivationFunction {
+	return sigmoid{}
+}
+
+func (s sigmoid) Value(net float64) float64 {
 	return 1 / (1 + math.Exp(-net))
 }
 
-func (s Sigmoid) Gradient(net float64) float64 {
+func (s sigmoid) Gradient(net float64) float64 {
 	return net * (1 - net)
 }

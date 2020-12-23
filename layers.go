@@ -35,16 +35,16 @@ func (l *baseLayer) processInput(input []float64) []float64 {
 	return output
 }
 
-func (l baseLayer) getOutputCache() []float64 {
-	return l.outputCache
-}
-
 func (l *baseLayer) net(i int, input []float64) float64 {
 	net := l.biases[i]
 	for j := 0; j < l.prevLayerNeurons; j++ {
-		net += input[i] * l.weights[j][i]
+		net += input[j] * l.weights[j][i]
 	}
 	return net
+}
+
+func (l baseLayer) getOutputCache() []float64 {
+	return l.outputCache
 }
 
 func (l *baseLayer) update(weights [][]float64, biases []float64) {

@@ -1,14 +1,10 @@
 package feedforward
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
-
-type Model interface {
-	Fit([]Sample)
-	Predict([]float64) []float64
-}
 
 type Network struct {
 	neurons     []int
@@ -60,7 +56,7 @@ func constructBiases(neurons []int) [][]float64 {
 	layerCount := len(neurons) - 1
 	biases := make([][]float64, layerCount)
 	for k := 0; k < layerCount; k++ {
-		biases[k] = make([]float64, neurons[k])
+		biases[k] = make([]float64, neurons[k+1])
 	}
 	return biases
 }
@@ -75,11 +71,13 @@ func (n *Network) Fit(samples []Sample) {
 
 func (n *Network) backpropagation(samples []Sample) {
 	iter := 0
-	for iter < 1000 {
+	for iter < 50000 {
+		if iter%1000 == 0 {
+			fmt.Println(iter, MeanSquareError(n, samples))
+		}
 
 		preprocess(samples)
 		n.completeEpoch(samples)
-
 		iter++
 	}
 }
@@ -114,6 +112,8 @@ func (n *Network) completeEpoch(samples []Sample) {
 			for i := 0; i < len(biasGradient[k]); i++ {
 				biasGradient[k][i] += delta[i]
 			}
+
+			diff = delta
 		}
 
 		for k := 0; k < len(weightsGradient); k++ {
