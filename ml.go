@@ -3,10 +3,9 @@ package feedforward
 import "math"
 
 // Defines a machine learning model.
-// Inspired by sklearn.
 // Every type that implements this interface has a Fit phase and a Predict phase.
 // Fit phase must be called before calling Predict the first time.
-// Implementations should throw an error if Predict is called before Fit.
+// Implementations should signal if Predict is called before Fit.
 type Model interface {
 	Fit([]Sample)
 	Predict([]float64) []float64
