@@ -3,6 +3,7 @@ package feedforward
 import (
 	"fmt"
 	"math/rand"
+	"sync"
 	"time"
 )
 
@@ -62,9 +63,15 @@ func constructBiases(neurons []int) [][]float64 {
 }
 
 func (n *Network) Fit(samples []Sample) {
-	for _, layer := range n.layers {
-		layer.Initialize(n.initializer)
+	var wg sync.WaitGroup
+	wg.Add(len(n.layers))
+	for _, l := range n.layers {
+		go func(layer layer) {
+			defer wg.Done()
+			layer.Initialize(n.initializer)
+		}(l)
 	}
+	wg.Wait()
 
 	n.backpropagation(samples)
 }
@@ -88,9 +95,10 @@ func preprocess(samples []Sample) {
 }
 
 func (n *Network) completeEpoch(samples []Sample) {
+	weightsGradient := constructWeights(n.neurons)
+	biasGradient := constructBiases(n.neurons)
+
 	for _, sample := range samples {
-		weightsGradient := constructWeights(n.neurons)
-		biasGradient := constructBiases(n.neurons)
 
 		input := sample.Input
 		expected := sample.Output
@@ -100,39 +108,59 @@ func (n *Network) completeEpoch(samples []Sample) {
 			diff[i] = expected[i] - actual[i]
 		}
 
-		for k := len(n.layers) - 1; k > 0; k-- {
+		for k := len(n.layers) - 1; k >= 0; k-- {
 			delta := n.layers[k].processError(diff)
-			prevLayerOutput := n.layers[k-1].getOutputCache()
+			var prevLayerOutput []float64
+			if k != 0 {
+				prevLayerOutput = n.layers[k-1].getOutputCache()
+			} else {
+				prevLayerOutput = input
+			}
 
 			for i := 0; i < len(weightsGradient[k]); i++ {
 				for j := 0; j < len(weightsGradient[k][i]); j++ {
-					weightsGradient[k][i][j] += delta[j] * prevLayerOutput[i]
+					weightsGradient[k][i][j] += n.eta * delta[j] * prevLayerOutput[i]
 				}
 			}
 			for i := 0; i < len(biasGradient[k]); i++ {
-				biasGradient[k][i] += delta[i]
+				biasGradient[k][i] += n.eta * delta[i]
 			}
 
 			diff = delta
 		}
 
-		for k := 0; k < len(weightsGradient); k++ {
-			for i := 0; i < len(weightsGradient[k]); i++ {
-				for j := 0; j < len(weightsGradient[k][i]); j++ {
-					weightsGradient[k][i][j] *= n.eta
-				}
-			}
-		}
-		for k := 0; k < len(biasGradient); k++ {
-			for i := 0; i < len(biasGradient[k]); i++ {
-				biasGradient[k][i] *= n.eta
-			}
-		}
-
+		var wg sync.WaitGroup
+		wg.Add(len(n.layers))
 		for k := 0; k < len(n.layers); k++ {
-			n.layers[k].update(weightsGradient[k], biasGradient[k])
+			go func(layer layer, weightsGradient [][]float64, biasGradient []float64) {
+				defer wg.Done()
+				layer.update(weightsGradient, biasGradient)
+			}(n.layers[k], weightsGradient[k], biasGradient[k])
+		}
+		wg.Wait()
+
+		clearGradients(weightsGradient, biasGradient)
+	}
+}
+
+func clearGradients(weightsGradient [][][]float64, biasGradient [][]float64) {
+	clear := func(array [][]float64, wq *sync.WaitGroup) {
+		defer wq.Done()
+		for i := 0; i < len(array); i++ {
+			for j := 0; j < len(array[i]); j++ {
+				array[i][j] = 0.
+			}
 		}
 	}
+
+	var wg sync.WaitGroup
+	wg.Add(len(weightsGradient) + 1)
+	for k := 0; k < len(weightsGradient); k++ {
+		go clear(weightsGradient[k], &wg)
+	}
+	go clear(biasGradient, &wg)
+
+	wg.Wait()
 }
 
 func (n *Network) Predict(input []float64) []float64 {

@@ -1,5 +1,7 @@
 package feedforward
 
+import "sync"
+
 type layer interface {
 	Initialize(Initializer)
 	processInput([]float64) []float64
@@ -28,9 +30,15 @@ func (l *baseLayer) Initialize(initializer Initializer) {
 
 func (l *baseLayer) processInput(input []float64) []float64 {
 	output := make([]float64, l.neurons)
+	var wg sync.WaitGroup
+	wg.Add(l.neurons)
 	for i := 0; i < l.neurons; i++ {
-		output[i] = l.activation.Value(l.net(i, input))
+		go func(i int) {
+			defer wg.Done()
+			output[i] = l.activation.Value(l.net(i, input))
+		}(i)
 	}
+	wg.Wait()
 	l.outputCache = output
 	return output
 }
