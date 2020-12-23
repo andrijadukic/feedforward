@@ -18,7 +18,7 @@ type IterativeModel interface {
 	Predict([]float64) []float64
 }
 
-// MSE loss function implementation.
+// MSE loss function.
 func MeanSquareError(model Model, samples []Sample) float64 {
 	mse := 0.
 	for _, sample := range samples {

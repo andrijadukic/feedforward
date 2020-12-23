@@ -30,12 +30,12 @@ func (c StoppingCondition) Not() StoppingCondition {
 	}
 }
 
-// Returns a new stopping condition which will return true when maximum iteration count is reached
+// Returns a new stopping condition which will return true when maximum Iteration count is reached
 func NewMaxIter(maxIter int) StoppingCondition {
-	return StoppingCondition{IsMet: func(statistic IterationStatistic) bool { return statistic.iteration >= maxIter }}
+	return StoppingCondition{IsMet: func(statistic IterationStatistic) bool { return statistic.GetIteration() >= maxIter }}
 }
 
 // Returns a new stopping condition which will return true when desired precision is reached
 func NewPrecision(precision float64) StoppingCondition {
-	return StoppingCondition{IsMet: func(statistic IterationStatistic) bool { return statistic.score <= precision }}
+	return StoppingCondition{IsMet: func(statistic IterationStatistic) bool { return statistic.GetScore() <= precision }}
 }

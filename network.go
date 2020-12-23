@@ -94,7 +94,8 @@ func (n *Network) Fit(samples []Sample) {
 func (n *Network) backpropagation(samples []Sample) {
 	iter := 0
 	for {
-		statistics := IterationStatistic{iteration: iter, score: MeanSquareError(n, samples)}
+		statistics := NewIterationStatistic(iter, func() float64 { return MeanSquareError(n, samples) })
+
 		n.NotifyObservers(statistics)
 
 		if n.stop.IsMet(statistics) {
