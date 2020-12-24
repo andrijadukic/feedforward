@@ -18,11 +18,11 @@ type IterativeModel interface {
 }
 
 // MSE loss function.
-func MeanSquareError(model Model, samples []Sample) float64 {
+func MeanSquareError(predictor func([]float64) []float64, samples []Sample) float64 {
 	mse := 0.
 	for _, sample := range samples {
 		expected := sample.Output
-		actual := model.Predict(sample.Input)
+		actual := predictor(sample.Input)
 		for i := 0; i < len(actual); i++ {
 			mse += math.Pow(expected[i]-actual[i], 2)
 		}

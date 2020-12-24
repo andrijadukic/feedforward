@@ -14,8 +14,14 @@ type Sample struct {
 	Output []float64
 }
 
+type Delimiters struct {
+	InputValues  string
+	InputOutput  string
+	OutputValues string
+}
+
 // Function for loading samples from a text file into a slice
-func Load(path string) ([]Sample, error) {
+func Load(path string, delimiters Delimiters) ([]Sample, error) {
 	var samples []Sample
 
 	file, err := os.Open(path)
@@ -29,9 +35,9 @@ func Load(path string) ([]Sample, error) {
 			return nil, err
 		}
 
-		rawSample := strings.Split(scanner.Text(), " -> ")
-		rawInput := strings.Split(rawSample[0], ",")
-		rawOutput := strings.Split(rawSample[1], ",")
+		rawSample := strings.Split(scanner.Text(), delimiters.InputOutput)
+		rawInput := strings.Split(rawSample[0], delimiters.InputValues)
+		rawOutput := strings.Split(rawSample[1], delimiters.OutputValues)
 
 		input := make([]float64, len(rawInput))
 		output := make([]float64, len(rawOutput))

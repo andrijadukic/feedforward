@@ -1,6 +1,7 @@
 package feedforward
 
 import (
+	"errors"
 	"math/rand"
 	"sync"
 	"time"
@@ -84,8 +85,6 @@ func (n *Network) PartialFit(samples []Sample) {
 // Fits model to given sample using online SGD.
 // Initializes weights on every call, doing so concurrently on a per layer basis.
 func (n *Network) Fit(samples []Sample) {
-	n.isFitted = true
-
 	var wg sync.WaitGroup
 	wg.Add(len(n.layers))
 	for _, l := range n.layers {
@@ -97,6 +96,8 @@ func (n *Network) Fit(samples []Sample) {
 	wg.Wait()
 
 	n.backpropagation(samples)
+	n.isFitted = true
+
 }
 
 // Backpropagation main loop.
@@ -105,7 +106,7 @@ func (n *Network) Fit(samples []Sample) {
 func (n *Network) backpropagation(samples []Sample) {
 	iter := 0
 	for {
-		statistics := NewIterationStatistic(iter, func() float64 { return MeanSquareError(n, samples) })
+		statistics := NewIterationStatistic(iter, func() float64 { return MeanSquareError(n.forwardPass, samples) })
 
 		n.NotifyObservers(statistics)
 
@@ -130,7 +131,7 @@ func (n *Network) completeEpoch(samples []Sample) {
 	for _, sample := range samples {
 		input := sample.Input
 		expected := sample.Output
-		actual := n.Predict(input)
+		actual := n.forwardPass(input)
 		diff := make([]float64, len(expected))
 		for i := 0; i < len(diff); i++ {
 			diff[i] = expected[i] - actual[i]
@@ -163,11 +164,24 @@ func (n *Network) completeEpoch(samples []Sample) {
 }
 
 // Performs a model prediction.
-func (n *Network) Predict(input []float64) []float64 {
-	if !n.isFitted {
-		panic("This instance of Network has not been fitted yet.")
+func (n *Network) Predict(input []float64) ([]float64, error) {
+	if len(input) != n.neurons[0] {
+		return nil, errors.New("given input is not of expected dimension")
 	}
 
+	if !n.isFitted {
+		return nil, errors.New("this instance of Network has not been fitted yet")
+	}
+
+	output := n.layers[0].processInput(input)
+	for i := 1; i < len(n.layers); i++ {
+		output = n.layers[i].processInput(output)
+	}
+	return output, nil
+}
+
+// Performs a forward pass through the network.
+func (n *Network) forwardPass(input []float64) []float64 {
 	output := n.layers[0].processInput(input)
 	for i := 1; i < len(n.layers); i++ {
 		output = n.layers[i].processInput(output)

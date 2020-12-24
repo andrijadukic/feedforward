@@ -7,5 +7,7 @@ The purpose of this package is threefold:
 - Provide a working implementation of a neural network algorithm that most people start of with
 - Provide a useful starting point for a more advanced, optimized implementation
 
-This code is Public Domain; do what you like with it. It is not guaranteed to work.  
-Recommendations welcome!
+It is not a goal to provide the fastest possible implementation, as those already exist and are inherently not as
+readable, especially for people only starting out.
+
+Recommendations are very welcome :)
