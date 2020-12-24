@@ -11,3 +11,33 @@ It is not a goal to provide the fastest possible implementation, as those alread
 readable, especially for people only starting out.
 
 Recommendations are very welcome :)
+
+## Usage
+
+``` go
+...
+samples, err := feedforward.Load(path, feedforward.Delimiters{"," ," -> ", ","})
+if err != nil {
+    panic(err)
+}
+
+neural := feedforward.NewNetwork(
+    []int{40, 40, 5},
+    []feedforward.ActivationFunction{feedforward.Sigmoid(), feedforward.Sigmoid(), feedforward.Sigmoid()},
+    feedforward.NewUniformInitializer(-1, 1),
+    feedforward.NewMaxIter(10000).Or(feedforward.NewPrecision(1e-5)),
+    0.1)
+
+neural.AddObserver(feedforward.NewNthIterationObserver(feedforward.NewStOutLogger(), 1000))
+
+neural.Fit(samples)
+
+prediction, err := neural.Predict(samples[0].Input)
+if err != nil {
+    panic(err)
+}
+
+fmt.Println("Prediction:", prediction)
+fmt.Println("Actual:", samples[0].Output)
+...
+```
