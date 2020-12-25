@@ -48,7 +48,7 @@ func constructLayers(neurons []int, activations []ActivationFunction) []layer {
 	return layers
 }
 
-// Construct a 3d slice which holds all the weights used in the network.
+// Constructs a 3d slice which holds all the weights used in the network.
 func constructWeights(neurons []int) [][][]float64 {
 	layerCount := len(neurons) - 1
 	weights := make([][][]float64, layerCount)
@@ -61,7 +61,7 @@ func constructWeights(neurons []int) [][][]float64 {
 	return weights
 }
 
-// Construct a 2d slice which holds all the biases used in the network.
+// Constructs a 2d slice which holds all the biases used in the network.
 func constructBiases(neurons []int) [][]float64 {
 	layerCount := len(neurons) - 1
 	biases := make([][]float64, layerCount)

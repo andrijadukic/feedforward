@@ -11,7 +11,7 @@ type Predictor func([]float64) []float64
 type LossFunction func(Predictor, []Sample) float64
 
 // MSE loss function.
-func MeanSquareError(predictor func([]float64) []float64, samples []Sample) float64 {
+func MeanSquareError(predictor Predictor, samples []Sample) float64 {
 	mse := 0.
 	for _, sample := range samples {
 		expected := sample.Output
