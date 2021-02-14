@@ -1,6 +1,8 @@
 package feedforward
 
-import "math"
+import (
+	"math"
+)
 
 // Represents a function which takes a slice of float64 as input and returns a prediction of an output.
 // This type is a generalization of the Predict method of Model interface as this does not require the Fit method, which

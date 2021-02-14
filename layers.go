@@ -1,7 +1,5 @@
 package feedforward
 
-import "sync"
-
 // Represents a layer of a feedforward neural network.
 type layer interface {
 	initialize(Initializer)
@@ -37,15 +35,9 @@ func (l *baseLayer) initialize(initializer Initializer) {
 func (l *baseLayer) processInput(input []float64) []float64 {
 	output := make([]float64, l.neurons)
 
-	var wg sync.WaitGroup
-	wg.Add(l.neurons)
 	for i := 0; i < l.neurons; i++ {
-		go func(i int) {
-			defer wg.Done()
-			output[i] = l.activation.Value(l.net(i, input))
-		}(i)
+		output[i] = l.activation.Value(l.net(i, input))
 	}
-	wg.Wait()
 
 	l.outputCache = output
 	return output
@@ -99,19 +91,13 @@ func (h *hiddenLayer) processError(delta []float64) []float64 {
 	layerError := make([]float64, h.neurons)
 	output := h.outputCache
 
-	var wg sync.WaitGroup
-	wg.Add(h.neurons)
 	for i := 0; i < h.neurons; i++ {
-		go func(i int, weights []float64) {
-			defer wg.Done()
-			sum := 0.
-			for i := 0; i < h.nextLayerNeurons; i++ {
-				sum += delta[i] * weights[i]
-			}
-			layerError[i] = h.activation.Gradient(output[i]) * sum
-		}(i, h.nextLayerWeights[i])
+		sum := 0.
+		for j := 0; j < h.nextLayerNeurons; j++ {
+			sum += delta[j] * h.nextLayerWeights[i][j]
+		}
+		layerError[i] = h.activation.Gradient(output[i]) * sum
 	}
-	wg.Wait()
 
 	return layerError
 }
