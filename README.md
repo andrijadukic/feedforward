@@ -1,4 +1,4 @@
-# gofeedforward
+# feedforward
 
 A multilayer feedforward neural network implemented in Go, trained via backpropagation.  
 The purpose of this package is threefold:
